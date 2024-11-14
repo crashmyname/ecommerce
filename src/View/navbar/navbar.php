@@ -75,26 +75,18 @@
   </div>
   <script>
   $(document).ready(function() {
-  // Ketika item sidebar diklik
   $('.sidebar-menu .nav-link').on('click', function(e) {
     e.preventDefault();
-    let url = $(this).attr('href'); // Ambil URL dari href
-
-    // Ubah URL di address bar menggunakan pushState tanpa reload halaman
+    let url = $(this).attr('href'); 
     history.pushState({ path: url }, '', url);
-
-    // Lakukan Ajax untuk mengambil konten dari URL tersebut
     $.ajax({
       url: url,
       method: 'GET',
       success: function(response) {
-        // Ambil hanya konten dari response dan perbarui bagian konten
-        let content = $(response).find('.main-content').html(); // Mengambil konten dari response
-        $('.main-content').html(content); // Update hanya bagian .main-content
-
-        // Jika ada JavaScript yang perlu dijalankan kembali, jalankan di sini
+        let content = $(response).find('.main-content').html(); 
+        $('.main-content').html(content); 
         if (typeof initDataTable === 'function') {
-          initDataTable();  // Jika ada fungsi DataTable yang perlu dipanggil, jalankan kembali
+          initDataTable(); 
         }
       },
       error: function() {
@@ -103,21 +95,16 @@
     });
   });
 
-  // Tangani perubahan URL melalui tombol browser kembali/maju
   window.onpopstate = function(event) {
     if (event.state && event.state.path) {
-      // Lakukan Ajax untuk memuat konten sesuai URL
       $.ajax({
         url: event.state.path,
         method: 'GET',
         success: function(response) {
-          // Ambil konten yang sesuai dan perbarui halaman
           let content = $(response).find('.main-content').html();
           $('.main-content').html(content);
-
-          // Jika ada JavaScript yang perlu dijalankan kembali, jalankan di sini
           if (typeof initDataTable === 'function') {
-            initDataTable();  // Reinitialize DataTable jika ada
+            initDataTable(); 
           }
         },
         error: function() {
