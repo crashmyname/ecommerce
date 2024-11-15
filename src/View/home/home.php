@@ -3,5 +3,5 @@
         <h1>Home</h1>
     </div>
 
-<p>ini adalah content home</p>
+<p><?= $data?></p>
 </section>
