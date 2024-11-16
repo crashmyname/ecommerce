@@ -7,9 +7,7 @@ use Support\AuthMiddleware; //<-- Penambahan Middleware atau session login
 
 // handleMiddleware();
 
-Route::get('/home', function(){
-    return View::render('home/home',['data'=>'ini adalah home'],'navbar/navbar');
-});
+Route::get('/home', [ProductController::class, 'index']);
 Route::get('/product', function(){
     View::render('products/products',[],'navbar/navbar');
 });

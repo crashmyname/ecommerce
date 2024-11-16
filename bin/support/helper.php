@@ -236,6 +236,11 @@ use Support\BaseController;
         return $basecontroller->setSecurityHeaders();
     }
 
+    function view($view, $data = [], $layout = null) {
+        $basecontroller = new BaseController();
+        return $basecontroller->view($view,$data,$layout);
+    }
+
     function back() {
         $basecontroller = new BaseController();
         return $basecontroller->back();

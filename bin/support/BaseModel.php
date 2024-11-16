@@ -43,6 +43,14 @@ class BaseModel
 
     private function filterAttributes($attributes)
     {
+        if (!is_array($attributes)) {
+            return [];
+        }
+        
+        if (!empty($this->fillable) && !empty($this->guarded)) {
+            throw new \Exception('You cannot use both $fillable and $guarded at the same time.');
+        }
+
         // Jika fillable diisi, hanya ambil atribut yang ada di fillable
         if (!empty($this->fillable)) {
             return array_intersect_key($attributes, array_flip($this->fillable));
@@ -329,45 +337,46 @@ class BaseModel
         return null;
     }
 
-    public static function all()
+    public static function all($fetchStyle = PDO::FETCH_OBJ)
     {
         $instance = new static();
         $sql = "SELECT * FROM {$instance->table}";
         $stmt = $instance->connection->prepare($sql);
         $stmt->execute();
-        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll($fetchStyle);
         return $data;
     }
 
-    public function count()
+    public static function count()
     {
-        $sql = "SELECT COUNT(*) as count FROM {$this->table}";
+        $instance = new static();
+        $sql = "SELECT COUNT(*) as count FROM {$instance->table}";
 
-        if (!empty($this->joins)) {
-            $sql .= ' ' . implode(' ', $this->joins);
+        if (!empty($instance->joins)) {
+            $sql .= ' ' . implode(' ', $instance->joins);
         }
 
-        if (!empty($this->whereConditions) || !empty($this->orWhereConditions)) {
+        if (!empty($instance->whereConditions) || !empty($instance->orWhereConditions)) {
             $sql .= ' WHERE ';
             $conditions = [];
 
             // Memasukkan where conditions
-            if (!empty($this->whereConditions)) {
-                $conditions[] = '(' . implode(' AND ', $this->whereConditions) . ')';
+            if (!empty($instance->whereConditions)) {
+                $conditions[] = '(' . implode(' AND ', $instance->whereConditions) . ')';
             }
 
             // Memasukkan orWhere conditions
-            if (!empty($this->orWhereConditions)) {
-                $conditions[] = '(' . implode(' OR ', $this->orWhereConditions) . ')';
+            if (!empty($instance->orWhereConditions)) {
+                $conditions[] = '(' . implode(' OR ', $instance->orWhereConditions) . ')';
             }
 
             // Gabungkan semua kondisi
             $sql .= implode(' AND ', $conditions);
         }
 
-        $stmt = $this->connection->prepare($sql);
+        $stmt = $instance->connection->prepare($sql);
 
-        foreach ($this->whereParams as $key => $value) {
+        foreach ($instance->whereParams as $key => $value) {
             $stmt->bindValue($key, $value);
         }
 
@@ -488,7 +497,7 @@ class BaseModel
         $stmt->execute();
     }
 
-    public static function find($id)
+    public static function find($id,$fetchStyle = PDO::FETCH_OBJ)
     {
         $instance = new static();
         $sql = "SELECT * FROM {$instance->table} WHERE {$instance->primaryKey} = :id";
@@ -496,7 +505,7 @@ class BaseModel
         $stmt->bindValue(':id', $id);
         $stmt->execute();
 
-        $data = $stmt->fetch(PDO::FETCH_ASSOC);
+        $data = $stmt->fetch($fetchStyle);
 
         if ($data) {
             return new static($data);

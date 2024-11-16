@@ -1,6 +1,7 @@
 <?php
 
 namespace Support;
+use ReflectionClass;
 
 class BaseController {
     
@@ -416,5 +417,36 @@ class BaseController {
             header("Location: /");
             exit();
         }
+    }
+
+    public function view($view, $data = [], $layout = null)
+    {
+        try{
+            extract($data);
+            $viewPath = __DIR__ . '/../../src/View/' . $view . '.php';
+            if (!file_exists($viewPath)) {
+                throw new \Exception("View file not found: $viewPath");
+            }
+            ob_start();
+            include $viewPath;
+            $content = ob_get_clean();
+
+            if ($layout) {
+                $layoutPath = __DIR__ . '/../../src/View/' . $layout . '.php';
+                if (file_exists($layoutPath)) {
+                    include $layoutPath;
+                } else {
+                    throw new \Exception("Layout file not found: $layoutPath");
+                }
+            } else {
+                echo $content;
+            }
+        } catch (\Exception $e){
+            if (!headers_sent()) { 
+                http_response_code(500);
+            }
+            View::renderError($e);
+        }
+        exit();
     }
 }
