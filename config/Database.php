@@ -49,11 +49,67 @@ class Database
     private static function connect($config)
     {
         try {
-            // Menentukan jenis database dari konfigurasi
             $dsn = self::getDsn($config);
-            self::$conn = new PDO($dsn, $config['DB_USERNAME'], $config['DB_PASSWORD']);
-            self::$conn->exec("set names utf8");
+            self::$conn = new PDO($dsn, $config['DB_USERNAME'] ?? null, $config['DB_PASSWORD'] ?? null);
             self::$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Penanganan encoding atau konfigurasi khusus per database
+            $connection = strtolower($config['DB_CONNECTION']); // Pastikan case-insensitive
+            switch ($connection) {
+                case 'pgsql':
+                    // PostgreSQL: Atur encoding ke UTF-8
+                    self::$conn->exec("SET client_encoding TO 'UTF8'");
+                    break;
+
+                case 'mysql':
+                    // MySQL: Gunakan utf8mb4 untuk mendukung emoji dan karakter multi-byte
+                    self::$conn->exec('SET NAMES utf8mb4');
+                    break;
+
+                case 'sqlite':
+                    // SQLite tidak memerlukan pengaturan khusus pada encoding
+                    break;
+
+                case 'sqlsrv':
+                    // SQL Server tidak memerlukan pengaturan tambahan secara umum
+                    // Namun, Anda bisa menambahkan pengaturan session jika diperlukan
+                    break;
+
+                case 'oci':
+                    // Oracle: Atur session ke pengaturan bahasa tertentu
+                    self::$conn->exec("ALTER SESSION SET NLS_LANGUAGE = 'AMERICAN'");
+                    self::$conn->exec("ALTER SESSION SET NLS_TERRITORY = 'AMERICA'");
+                    break;
+
+                case 'access':
+                    // Microsoft Access: Tidak ada pengaturan tambahan
+                    // Pastikan DSN Access dikonfigurasi dengan benar di ODBC
+                    break;
+
+                case 'db2':
+                    // IBM DB2: Tambahkan pengaturan khusus jika diperlukan
+                    self::$conn->exec("SET CURRENT SCHEMA = '{$config['DB_SCHEMA']}'");
+                    break;
+
+                case 'firebird':
+                    // Firebird: Pastikan karakter set disesuaikan
+                    self::$conn->exec('SET NAMES UTF8');
+                    break;
+
+                case 'cubrid':
+                    // CUBRID: Tambahkan pengaturan encoding jika diperlukan
+                    self::$conn->exec('SET NAMES utf8');
+                    break;
+
+                case 'informix':
+                    // Informix: Atur pengaturan database
+                    self::$conn->exec('SET ISOLATION TO DIRTY READ');
+                    break;
+
+                default:
+                    // Database tidak dikenal
+                    throw new PDOException("Unsupported database connection type: {$connection}");
+            }
         } catch (PDOException $e) {
             self::handleConnectionError($e);
         }
@@ -140,10 +196,10 @@ class Database
                     $_ENV[$key] = $value; // Menyimpan variabel ke $_ENV
                 }
             } else {
-                echo "Error parsing .env file.";
+                echo 'Error parsing .env file.';
             }
         } else {
-            echo "File .env tidak ditemukan.";
+            echo 'File .env tidak ditemukan.';
         }
     }
 }
